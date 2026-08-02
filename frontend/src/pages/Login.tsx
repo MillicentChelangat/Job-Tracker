@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Eye, EyeOff } from "lucide-react";
+
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -11,6 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const justRegistered = searchParams[0].get('registered') === '1';
+  const [showPassword, setShowPassword] = useState(false);
 
 
   if (user) return <Navigate to="/" replace />;
@@ -56,37 +59,51 @@ export default function Login() {
               required
             />
           </div>
+
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Type your password"
-              required
-            />
+
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-input pr-10"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Type your password"
+                required
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff size={20} className="text-gray-500" />
+                ) : (
+                  <Eye size={20} className="text-gray-500" />
+                )}
+              </button>
+            </div>
+
+            <div>
+              <label className="form-label">
+                Don't have an account? <a href="/register" className="auth-link">Sign up</a>
+              </label>
+              <div style={{ height: '0.5rem' }} />
+              <label className="form-label">
+                <a href="/forgot-password" className="auth-link">Forgot password?</a>
+              </label>
+            </div>
+
+            {error && <p className="field-error">{error}</p>}
+
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+              {loading ? 'Login…' : 'Login'}
+            </button>
           </div>
-
-          <div>
-            <label className="form-label">
-              Don't have an account? <a href="/register" className="auth-link">Sign up</a>
-            </label>
-            <div style={{ height: '0.5rem' }} />
-            <label className="form-label">
-              <a href="/forgot-password" className="auth-link">Forgot password?</a>
-            </label>
-        
-          </div>
-            
-
-          {error && <p className="field-error">{error}</p>}
-
-          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? 'Login…' : 'Login'}
-          </button>
         </form>
       </div>
-    </div>
+    </div>     
   );
 }
