@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { jobsApi } from '../api/jobs';
+import { applicationsApi } from '../api/applications';
 import StatusBadge from '../components/StatusBadge';
-import type { JobStatus } from '../types/job';
+import type { ApplicationStatus } from '../types/job';
 
 const STATUSES: { value: string; label: string }[] = [
   { value: '', label: 'All Statuses' },
@@ -22,28 +22,27 @@ export default function JobList() {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['jobs', { search, status, ordering, page }],
+    queryKey: ['applications', { search, status, ordering, page }],
     queryFn: async () => {
-  const res = await jobsApi.getAll({ search, status, ordering, page });
-  const raw = res.data;
-  // handles plain array OR paginated { count, results }
-  if (Array.isArray(raw)) {
-    return { count: raw.length, results: raw };
-  }
-  return raw;
-},
+      const res = await applicationsApi.getAll({ search, status, ordering, page });
+      const raw = res.data;
+      if (Array.isArray(raw)) {
+        return { count: raw.length, results: raw };
+      }
+      return raw;
+    },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => jobsApi.delete(id),
+    mutationFn: (id: number) => applicationsApi.delete(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['jobs'] });
+      qc.invalidateQueries({ queryKey: ['applications'] });
       qc.invalidateQueries({ queryKey: ['stats'] });
       setConfirmDelete(null);
     },
   });
 
-  const jobs = data?.results ?? [];
+  const applications = data?.results ?? [];
   const totalPages = data ? Math.ceil(data.count / 20) : 1;
 
   return (
@@ -61,7 +60,7 @@ export default function JobList() {
         <input
           className="search-input"
           type="search"
-          placeholder="Search company, role, location…"
+          placeholder="Search company, position…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
         />
@@ -73,8 +72,8 @@ export default function JobList() {
         <select className="filter-select" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
           <option value="-created_at">Newest first</option>
           <option value="created_at">Oldest first</option>
-          <option value="-applied_date">Applied date ↓</option>
-          <option value="applied_date">Applied date ↑</option>
+          <option value="-date_applied">Applied date ↓</option>
+          <option value="date_applied">Applied date ↑</option>
           <option value="status">Status</option>
         </select>
       </div>
@@ -83,7 +82,7 @@ export default function JobList() {
       <div className="card table-card">
         {isLoading ? (
           <div className="page-loading">Loading…</div>
-        ) : jobs.length === 0 ? (
+        ) : applications.length === 0 ? (
           <div className="empty-state-full">
             <p>No applications found.</p>
             <Link to="/jobs/new" className="btn btn-primary" style={{ marginTop: '1rem' }}>Add your first application</Link>
@@ -93,8 +92,8 @@ export default function JobList() {
             <thead>
               <tr>
                 <th>Company</th>
-                <th>Role</th>
-                <th>Location</th>
+                <th>Position</th>
+                <th>Work Mode</th>
                 <th>Status</th>
                 <th>Applied</th>
                 <th>Follow-up</th>
@@ -103,26 +102,26 @@ export default function JobList() {
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id}>
+              {applications.map((app) => (
+                <tr key={app.id}>
                   <td>
                     <div className="table-company">
-                      <div className="company-avatar sm">{job.company[0]}</div>
-                      <span>{job.company}</span>
+                      <div className="company-avatar sm">{app.company_name[0]}</div>
+                      <span>{app.company_name}</span>
                     </div>
                   </td>
-                  <td className="role-cell">{job.role}</td>
-                  <td className="muted-cell">{job.location || '—'}</td>
-                  <td><StatusBadge status={job.status as JobStatus} /></td>
-                  <td className="muted-cell">{job.applied_date}</td>
-                  <td className="muted-cell">{job.follow_up_date || '—'}</td>
-                  <td className="muted-cell">{job.salary || '—'}</td>
+                  <td className="role-cell">{app.position}</td>
+                  <td className="muted-cell">{app.work_mode || '—'}</td>
+                  <td><StatusBadge status={app.status as ApplicationStatus} /></td>
+                  <td className="muted-cell">{app.date_applied}</td>
+                  <td className="muted-cell">{app.follow_up_date || '—'}</td>
+                  <td className="muted-cell">{app.salary || '—'}</td>
                   <td>
                     <div className="action-btns">
-                      <Link to={`/jobs/${job.id}/edit`} className="btn btn-sm">Edit</Link>
+                      <Link to={`/jobs/${app.id}/edit`} className="btn btn-sm">Edit</Link>
                       <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => setConfirmDelete(job.id)}
+                        onClick={() => setConfirmDelete(app.id)}
                       >Delete</button>
                     </div>
                   </td>

@@ -4,18 +4,18 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { jobsApi } from '../api/jobs';
+import { applicationsApi } from '../api/applications';
 import StatusBadge from '../components/StatusBadge';
-import type { JobStatus } from '../types/job';
+import type { ApplicationStatus } from '../types/job';
 
-const STATUS_COLORS: Record<JobStatus, string> = {
+const STATUS_COLORS: Record<ApplicationStatus, string> = {
   applied:   '#7C3AED',
   interview: '#EF9F27',
   offer:     '#639922',
   rejected:  '#E24B4A',
 };
 
-const STATUS_ORDER: JobStatus[] = ['applied', 'interview', 'offer', 'rejected'];
+const STATUS_ORDER: ApplicationStatus[] = ['applied', 'interview', 'offer', 'rejected'];
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -23,7 +23,7 @@ function buildCalendar(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrev = new Date(year, month, 0).getDate();
-  const offset = (firstDay + 6) % 7; // Monday-first
+  const offset = (firstDay + 6) % 7;
   const cells: { day: number; type: 'prev' | 'cur' | 'next' }[] = [];
   for (let i = offset - 1; i >= 0; i--) cells.push({ day: daysInPrev - i, type: 'prev' });
   for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, type: 'cur' });
@@ -37,12 +37,12 @@ const MONTH_NAMES = ['January','February','March','April','May','June','July','A
 export default function Dashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['stats'],
-    queryFn: () => jobsApi.getStats().then((r) => r.data),
+    queryFn: () => applicationsApi.getStats().then((r) => r.data),
   });
 
-  const { data: recentJobs } = useQuery({
-    queryKey: ['jobs', 'recent'],
-    queryFn: () => jobsApi.getAll({ ordering: '-created_at', page: 1 }).then((r) => r.data.results.slice(0, 4)),
+  const { data: recentApplications } = useQuery({
+    queryKey: ['applications', 'recent'],
+    queryFn: () => applicationsApi.getAll({ ordering: '-created_at', page: 1 }).then((r) => r.data.results.slice(0, 4)),
   });
 
   const today = new Date();
@@ -58,9 +58,7 @@ export default function Dashboard() {
 
   const offerRate = total ? Math.round((offered / total) * 100) : 0;
   const interviewRate = total ? Math.round(((interviewed + offered) / total) * 100) : 0;
-  const activePct = total ? Math.round(((applied + interviewed) / total) * 100) : 0;
 
-  // Donut arc for "weekly activity" style — we repurpose as interview rate
   const R = 54;
   const C = 2 * Math.PI * R;
   const dashOffset = C - (C * interviewRate) / 100;
@@ -79,12 +77,9 @@ export default function Dashboard() {
 
   return (
     <div className="dash">
-
-      {/* ── Row 1: Stat Cards ── */}
       <div className="dash-stats">
         {statCards.map(({ label, value, delta, positive, accent }) => (
           <div key={label} className="dcard stat-card-new">
-           
             <p className="sn-label">{label}</p>
             <p className="sn-value" style={{ color: accent }}>{value}</p>
             <p className={`sn-delta ${positive ? 'pos' : 'neg'}`}>{delta}</p>
@@ -92,12 +87,8 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ── Row 2: Main Grid ── */}
       <div className="dash-main">
-
-        {/* Center col: Activity donut + Bar chart */}
         <div className="dash-center">
-          {/* Activity card */}
           <div className="dcard activity-card">
             <h3 className="dcard-title">Interview Rate</h3>
             <div className="donut-wrap">
@@ -137,7 +128,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Bar chart card */}
           <div className="dcard barchart-card">
             <h3 className="dcard-title">Applications by Status</h3>
             <ResponsiveContainer width="100%" height={130}>
@@ -156,9 +146,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right col: Calendar + Recent */}
         <div className="dash-right">
-          {/* Calendar */}
           <div className="dcard calendar-card">
             <div className="cal-header">
               <button className="cal-nav">‹</button>
@@ -180,31 +168,29 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Recent Applications */}
           <div className="dcard recent-card">
             <div className="recent-header">
               <h3 className="dcard-title">Recent Applications</h3>
               <Link to="/jobs" className="card-link">View all →</Link>
             </div>
-            {!recentJobs?.length ? (
+            {!recentApplications?.length ? (
               <p className="empty-state">No applications yet. <Link to="/jobs/new">Add one!</Link></p>
             ) : (
               <ul className="recent-dash-list">
-                {recentJobs.map((job) => (
-                  <li key={job.id} className="recent-dash-item">
-                    <div className="company-avatar sm">{job.company[0]}</div>
+                {recentApplications.map((app) => (
+                  <li key={app.id} className="recent-dash-item">
+                    <div className="company-avatar sm">{app.company_name[0]}</div>
                     <div className="recent-info">
-                      <p className="recent-role">{job.role}</p>
-                      <p className="recent-company">{job.company}</p>
+                      <p className="recent-role">{app.position}</p>
+                      <p className="recent-company">{app.company_name}</p>
                     </div>
-                    <StatusBadge status={job.status} />
+                    <StatusBadge status={app.status} />
                   </li>
                 ))}
               </ul>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

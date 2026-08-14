@@ -63,26 +63,29 @@ export default function Login() {
           <div className="form-group">
             <label className="form-label">Password</label>
 
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
-                className="form-input pr-10"
+                className="form-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Type your password"
                 required
+                style={{ paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-3 flex items-center"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute', right: '10px', top: '50%',
+                  transform: 'translateY(-50%)', background: 'none', border: 'none',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  color: '#6b6a66', padding: 0,
+                }}
               >
-                {showPassword ? (
-                  <EyeOff size={20} className="text-gray-500" />
-                ) : (
-                  <Eye size={20} className="text-gray-500" />
-                )}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 

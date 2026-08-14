@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { Job, JobFormData, DashboardStats, PaginatedResponse } from '../types/job';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
@@ -37,39 +36,17 @@ api.interceptors.response.use(
   }
 );
 
-export const jobsApi = {
-  getAll: (params?: { search?: string; status?: string; ordering?: string; page?: number }) =>
-    api.get<PaginatedResponse<Job>>('/jobs/', { params }),
-
-  getOne: (id: number) => api.get<Job>(`/jobs/${id}/`),
-
-  create: (data: JobFormData) => api.post<Job>('/jobs/', data),
-
-  update: (id: number, data: Partial<JobFormData>) => api.patch<Job>(`/jobs/${id}/`, data),
-
-  delete: (id: number) => api.delete(`/jobs/${id}/`),
-
-  getStats: () => api.get<DashboardStats>('/jobs/stats/'),
-};
-
 export const authApi = {
   login: (email: string, password: string) =>
     api.post<{ access: string; refresh: string }>('/auth/token/', {
-      username: email,  // Django JWT expects username
+      username: email,
       password,
     }),
 
   register: (email: string, password: string, confirm_password: string) =>
-    api.post('/auth/register/', { email, password }),  // confirm_password validated frontend-side only
+    api.post('/auth/register/', { email, password }),
 
-  me: () => {
-    const token = localStorage.getItem('access_token');
-    return api.get('/auth/me/', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  },
+  me: () => api.get('/auth/me/'),
 };
 
 export default api;

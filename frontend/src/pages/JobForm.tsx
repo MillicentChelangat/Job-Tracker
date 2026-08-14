@@ -1,19 +1,27 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { jobsApi } from '../api/jobs';
-import type { JobFormData } from '../types/job';
+import { applicationsApi } from '../api/applications';
+import { companiesApi } from '../api/companies';
+import type { ApplicationFormData } from '../types/job';
 
-const defaultValues: JobFormData = {
-  company: '',
-  role: '',
-  location: '',
+// The form works with a plain company name string, same as before.
+// We resolve that name to a real Company id behind the scenes on save.
+type FormValues = Omit<ApplicationFormData, 'company'> & { company_name: string };
+
+const defaultValues: FormValues = {
+  company_name: '',
+  position: '',
   status: 'applied',
-  applied_date: new Date().toISOString().split('T')[0],
+  employment_type: '',
+  work_mode: '',
+  date_applied: new Date().toISOString().split('T')[0],
+  deadline: null,
   follow_up_date: null,
-  notes: '',
   job_url: '',
+  job_description: '',
+  notes: '',
   salary: '',
 };
 
@@ -22,28 +30,65 @@ export default function JobForm() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [resolveError, setResolveError] = useState('');
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<JobFormData>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     defaultValues,
   });
 
-  const { data: job, isLoading } = useQuery({
-    queryKey: ['job', id],
-    queryFn: () => jobsApi.getOne(Number(id)).then((r) => r.data),
+  const { data: application, isLoading } = useQuery({
+    queryKey: ['application', id],
+    queryFn: () => applicationsApi.getOne(Number(id)).then((r) => r.data),
     enabled: isEdit,
   });
 
   useEffect(() => {
-    if (job) reset({ ...job, follow_up_date: job.follow_up_date ?? null });
-  }, [job, reset]);
+    if (application) {
+      reset({
+        ...application,
+        company_name: application.company_name,
+        deadline: application.deadline ?? null,
+        follow_up_date: application.follow_up_date ?? null,
+      });
+    }
+  }, [application, reset]);
+
+  // Finds a company by name (case-insensitive) among the user's own companies,
+  // or creates a new one if none matches. Returns the company id either way.
+  async function resolveCompanyId(name: string): Promise<number> {
+    const trimmed = name.trim();
+    const res = await companiesApi.getAll({ search: trimmed });
+    const existing = res.data.results.find(
+      (c) => c.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) return existing.id;
+
+    const created = await companiesApi.create({
+      name: trimmed,
+      website: '',
+      location: '',
+      email: '',
+      phone: '',
+      industry: '',
+      notes: '',
+    });
+    return created.data.id;
+  }
 
   const mutation = useMutation({
-    mutationFn: (data: JobFormData) =>
-      isEdit ? jobsApi.update(Number(id), data) : jobsApi.create(data),
+    mutationFn: async (data: FormValues) => {
+      const { company_name, ...rest } = data;
+      const companyId = await resolveCompanyId(company_name);
+      const payload: ApplicationFormData = { ...rest, company: companyId };
+      return isEdit ? applicationsApi.update(Number(id), payload) : applicationsApi.create(payload);
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['jobs'] });
+      qc.invalidateQueries({ queryKey: ['applications'] });
       qc.invalidateQueries({ queryKey: ['stats'] });
       navigate('/jobs');
+    },
+    onError: () => {
+      setResolveError('Failed to save. Please check your inputs and try again.');
     },
   });
 
@@ -54,13 +99,15 @@ export default function JobForm() {
       <header className="page-header">
         <div>
           <h1 className="page-title">{isEdit ? 'Edit Application' : 'Add Application'}</h1>
-          <p className="page-subtitle">{isEdit ? `Editing ${job?.role} at ${job?.company}` : 'Track a new job application'}</p>
+          <p className="page-subtitle">
+            {isEdit ? `Editing ${application?.position} at ${application?.company_name}` : 'Track a new job application'}
+          </p>
         </div>
         <button className="btn" onClick={() => navigate(-1)}>← Back</button>
       </header>
 
       <div className="card form-card">
-        <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
+        <form onSubmit={handleSubmit((data) => { setResolveError(''); mutation.mutate(data); })}>
 
           <div className="form-section">
             <h2 className="form-section-title">Job Details</h2>
@@ -68,30 +115,42 @@ export default function JobForm() {
               <div className="form-group">
                 <label className="form-label">Company *</label>
                 <input
-                  {...register('company', { required: 'Company is required' })}
-                  className={`form-input ${errors.company ? 'input-error' : ''}`}
+                  {...register('company_name', { required: 'Company is required' })}
+                  className={`form-input ${errors.company_name ? 'input-error' : ''}`}
                   placeholder="e.g. Acme Corp"
                 />
-                {errors.company && <p className="field-error">{errors.company.message}</p>}
+                {errors.company_name && <p className="field-error">{errors.company_name.message}</p>}
               </div>
 
               <div className="form-group">
-                <label className="form-label">Role *</label>
+                <label className="form-label">Position *</label>
                 <input
-                  {...register('role', { required: 'Role is required' })}
-                  className={`form-input ${errors.role ? 'input-error' : ''}`}
+                  {...register('position', { required: 'Position is required' })}
+                  className={`form-input ${errors.position ? 'input-error' : ''}`}
                   placeholder="e.g. Senior Engineer"
                 />
-                {errors.role && <p className="field-error">{errors.role.message}</p>}
+                {errors.position && <p className="field-error">{errors.position.message}</p>}
               </div>
 
               <div className="form-group">
-                <label className="form-label">Location</label>
-                <input
-                  {...register('location')}
-                  className="form-input"
-                  placeholder="e.g. Nairobi, Remote"
-                />
+                <label className="form-label">Employment Type</label>
+                <select {...register('employment_type')} className="form-select">
+                  <option value="">—</option>
+                  <option value="full_time">Full-time</option>
+                  <option value="part_time">Part-time</option>
+                  <option value="contract">Contract</option>
+                  <option value="internship">Internship</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Work Mode</label>
+                <select {...register('work_mode')} className="form-select">
+                  <option value="">—</option>
+                  <option value="remote">Remote</option>
+                  <option value="onsite">On-site</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
               </div>
 
               <div className="form-group">
@@ -131,21 +190,35 @@ export default function JobForm() {
               <div className="form-group">
                 <label className="form-label">Applied Date *</label>
                 <input
-                  {...register('applied_date', { required: 'Applied date is required' })}
+                  {...register('date_applied', { required: 'Applied date is required' })}
                   type="date"
-                  className={`form-input ${errors.applied_date ? 'input-error' : ''}`}
+                  className={`form-input ${errors.date_applied ? 'input-error' : ''}`}
                 />
-                {errors.applied_date && <p className="field-error">{errors.applied_date.message}</p>}
+                {errors.date_applied && <p className="field-error">{errors.date_applied.message}</p>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Deadline</label>
+                <input {...register('deadline')} type="date" className="form-input" />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Follow-up Date</label>
-                <input
-                  {...register('follow_up_date')}
-                  type="date"
-                  className="form-input"
-                />
+                <input {...register('follow_up_date')} type="date" className="form-input" />
               </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h2 className="form-section-title">Job Description</h2>
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <textarea
+                {...register('job_description')}
+                className="form-textarea"
+                rows={5}
+                placeholder="Paste the job posting text here…"
+              />
             </div>
           </div>
 
@@ -162,9 +235,9 @@ export default function JobForm() {
             </div>
           </div>
 
-          {mutation.isError && (
+          {(mutation.isError || resolveError) && (
             <div className="form-error-banner">
-              Failed to save. Please check your inputs and try again.
+              {resolveError || 'Failed to save. Please check your inputs and try again.'}
             </div>
           )}
 
