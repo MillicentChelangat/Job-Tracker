@@ -1,32 +1,56 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.db.models import Count
-from .models import Job
-from .serializers import JobSerializer
+from .models import Company, Application
+from .serializers import CompanySerializer, ApplicationSerializer
 
-class JobViewSet(viewsets.ModelViewSet):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    serializer_class = CompanySerializer
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['company', 'role', 'location']
-    ordering_fields = ['applied_date', 'created_at', 'status']
+    search_fields = ['name', 'industry', 'location']
+
+    def get_queryset(self):
+        # Only ever return companies belonging to the logged-in user
+        return Company.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Force the company to be owned by whoever is logged in — never trust a user field from the request
+        serializer.save(user=self.request.user)
+
+
+class ApplicationViewSet(viewsets.ModelViewSet):
+    serializer_class = ApplicationSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['position', 'company__name', 'notes']
+    ordering_fields = ['date_applied', 'created_at', 'status', 'deadline']
+
+    def get_queryset(self):
+        return Application.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        status_counts = Job.objects.values('status').annotate(count=Count('status'))
-        total = Job.objects.count()
-        upcoming_followups = Job.objects.filter(
+        qs = Application.objects.filter(user=request.user)
+        status_counts = qs.values('status').annotate(count=Count('status'))
+        total = qs.count()
+        upcoming_followups = qs.filter(
             follow_up_date__isnull=False
         ).order_by('follow_up_date')[:5]
 
         return Response({
             'total': total,
             'by_status': {item['status']: item['count'] for item in status_counts},
-            'upcoming_followups': JobSerializer(upcoming_followups, many=True).data,
+            'upcoming_followups': ApplicationSerializer(upcoming_followups, many=True).data,
         })
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

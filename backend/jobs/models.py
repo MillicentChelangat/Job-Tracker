@@ -1,6 +1,28 @@
 from django.db import models
+from django.contrib.auth.models import User
 
-class Job(models.Model):
+
+class Company(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='companies')
+    name = models.CharField(max_length=200)
+    website = models.URLField(blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    industry = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name_plural = 'Companies'
+
+    def __str__(self):
+        return self.name
+
+
+class Application(models.Model):
     STATUS_CHOICES = [
         ('applied', 'Applied'),
         ('interview', 'Interview'),
@@ -8,15 +30,32 @@ class Job(models.Model):
         ('rejected', 'Rejected'),
     ]
 
-    company = models.CharField(max_length=200)
-    role = models.CharField(max_length=200)
-    location = models.CharField(max_length=200, blank=True)
+    EMPLOYMENT_TYPE_CHOICES = [
+        ('full_time', 'Full-time'),
+        ('part_time', 'Part-time'),
+        ('contract', 'Contract'),
+        ('internship', 'Internship'),
+    ]
+
+    WORK_MODE_CHOICES = [
+        ('remote', 'Remote'),
+        ('onsite', 'On-site'),
+        ('hybrid', 'Hybrid'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='applications')
+    position = models.CharField(max_length=200)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='applied')
-    applied_date = models.DateField()
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, blank=True)
+    work_mode = models.CharField(max_length=20, choices=WORK_MODE_CHOICES, blank=True)
+    date_applied = models.DateField()
+    deadline = models.DateField(null=True, blank=True)
     follow_up_date = models.DateField(null=True, blank=True)
-    notes = models.TextField(blank=True)
     job_url = models.URLField(blank=True)
+    job_description = models.TextField(blank=True)
     salary = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -24,4 +63,4 @@ class Job(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.role} @ {self.company}"
+        return f"{self.position} @ {self.company.name}"
