@@ -4,9 +4,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.db.models import Count
-from .models import Company, Application
-from .serializers import CompanySerializer, ApplicationSerializer
-
+from .models import Company, Application, Document, Interview
+from .serializers import CompanySerializer, ApplicationSerializer, DocumentSerializer, InterviewSerializer, RegisterSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class CompanyViewSet(viewsets.ModelViewSet):
     serializer_class = CompanySerializer
@@ -51,6 +51,47 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             'upcoming_followups': ApplicationSerializer(upcoming_followups, many=True).data,
         })
 
+
+
+
+class DocumentViewSet(viewsets.ModelViewSet):
+    serializer_class = DocumentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]  # required to accept actual file uploads, not just JSON
+
+    def get_queryset(self):
+        qs = Document.objects.filter(user=self.request.user)
+        application_id = self.request.query_params.get('application')
+        if application_id:
+            qs = qs.filter(application_id=application_id)
+        return qs
+
+    def perform_create(self, serializer):
+        uploaded_file = self.request.FILES.get('file')
+        serializer.save(
+            user=self.request.user,
+            file_name=uploaded_file.name if uploaded_file else '',
+        )
+
+
+class InterviewViewSet(viewsets.ModelViewSet):
+    serializer_class = InterviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Ownership flows through application.user, since Interview has no direct user field
+        qs = Interview.objects.filter(application__user=self.request.user)
+        application_id = self.request.query_params.get('application')
+        if application_id:
+            qs = qs.filter(application_id=application_id)
+        return qs
+
+    def perform_create(self, serializer):
+        application = serializer.validated_data['application']
+        if application.user != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You don't own this application.")
+        serializer.save()
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

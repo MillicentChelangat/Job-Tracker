@@ -50,3 +50,17 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+export type DocumentType = 'resume' | 'cover_letter';
+export type ParseStatus = 'pending' | 'parsed' | 'failed';
+
+export interface Document {
+  id: number;
+  application: number | null;
+  document_type: DocumentType;
+  file: string;          // URL to the stored file
+  file_name: string;
+  parse_status: ParseStatus;
+  parsed_at: string | null;
+  uploaded_at: string;
+}

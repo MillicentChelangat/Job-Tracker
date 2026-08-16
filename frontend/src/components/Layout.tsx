@@ -62,13 +62,22 @@ export default function Layout({ children }: { children: ReactNode }) {
             </span>
             Add Job
           </NavLink>
+           <NavLink to="/documents" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <span className="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M4 1.5h5l3 3v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-11a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M9 1.5v3h3" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          </svg>
+        </span>
+        Documents
+      </NavLink>
         </nav>
 
         <div className="sidebar-footer">
           <div className="user-info">
-            <div className="user-avatar">{user?.username?.[0]?.toUpperCase() ?? 'U'}</div>
+            <div className="user-avatar">{user?.email?.[0]?.toUpperCase() ?? 'U'}</div>
             <div className="user-details">
-              <p className="user-name">{user?.username}</p>
+              <p className="user-name">{user?.email}</p>
               <p className="user-email">Job Seeker</p>
             </div>
           </div>
@@ -80,6 +89,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
+
+     
 
       {/* ── Main Content ── */}
       <main className="main-content">

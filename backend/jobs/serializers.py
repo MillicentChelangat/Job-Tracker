@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Company, Application
+from .models import Company, Application, Document, Interview
 from django.contrib.auth.models import User
 
 
@@ -22,6 +22,23 @@ class ApplicationSerializer(serializers.ModelSerializer):
         ]
         # 'user' left out for the same reason — set automatically, never trusted from the request
 
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = [
+            'id', 'application', 'document_type', 'file', 'file_name',
+            'parse_status', 'parsed_at', 'uploaded_at',
+        ]
+        read_only_fields = ['file_name', 'parse_status', 'parsed_at', 'uploaded_at']
+        # 'user' is left out — set automatically from the logged-in user, same pattern as Company/Application
+
+class InterviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Interview
+        fields = [
+            'id', 'application', 'interview_date', 'interview_time', 'interview_type',
+            'location', 'interviewer', 'notes', 'result', 'created_at',
+        ]
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -42,3 +59,4 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+
