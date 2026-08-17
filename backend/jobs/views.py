@@ -4,9 +4,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.db.models import Count
-from .models import Company, Application, Document, Interview
-from .serializers import CompanySerializer, ApplicationSerializer, DocumentSerializer, InterviewSerializer, RegisterSerializer
+from .models import Company, Application, Document, Interview, Profile
+from .serializers import CompanySerializer, ApplicationSerializer, DocumentSerializer, InterviewSerializer, RegisterSerializer, ProfileSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.generics import RetrieveUpdateAPIView
+
 
 class CompanyViewSet(viewsets.ModelViewSet):
     serializer_class = CompanySerializer
@@ -111,3 +113,10 @@ def register(request):
         password=password
     )
     return Response({'email': user.email}, status=201)
+
+class ProfileView(RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile

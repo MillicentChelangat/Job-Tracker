@@ -98,6 +98,7 @@ export default function JobList() {
                 <th>Applied</th>
                 <th>Follow-up</th>
                 <th>Salary</th>
+                <th>Interviews</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -107,6 +108,7 @@ export default function JobList() {
                   <td>
                     <div className="table-company">
                       <div className="company-avatar sm">{app.company_name[0]}</div>
+                      
                       <span>{app.company_name}</span>
                     </div>
                   </td>
@@ -116,9 +118,11 @@ export default function JobList() {
                   <td className="muted-cell">{app.date_applied}</td>
                   <td className="muted-cell">{app.follow_up_date || '—'}</td>
                   <td className="muted-cell">{app.salary || '—'}</td>
+                  <td className="muted-cell">{app.interview_count > 0 ? `${app.interview_count} scheduled${app.next_interview_date ? ` · Next: ${app.next_interview_date.date} at ${app.next_interview_date.time}` : ''}`: '—'}</td>
                   <td>
                     <div className="action-btns">
                       <Link to={`/jobs/${app.id}/edit`} className="btn btn-sm">Edit</Link>
+                      <Link to={`/jobs/${app.id}`} className="btn btn-sm">View</Link>
                       <button
                         className="btn btn-sm btn-danger"
                         onClick={() => setConfirmDelete(app.id)}

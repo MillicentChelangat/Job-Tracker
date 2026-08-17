@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Company, Application, Document, Interview
+from .models import Company, Application, Document, Interview, Profile
 
 
 @admin.register(Company)
@@ -24,3 +24,8 @@ class DocumentAdmin(admin.ModelAdmin):
 class InterviewAdmin(admin.ModelAdmin):
     list_display = ['application', 'interview_type', 'interview_date', 'result']
     list_filter = ['interview_type', 'result']
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'first_name', 'last_name', 'phone', 'location']
+

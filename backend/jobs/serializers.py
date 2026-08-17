@@ -1,6 +1,8 @@
 from rest_framework import serializers
-from .models import Company, Application, Document, Interview
+from .models import Company, Application, Document, Interview, Profile
 from django.contrib.auth.models import User
+from django.utils import timezone
+
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -12,6 +14,8 @@ class CompanySerializer(serializers.ModelSerializer):
 
 class ApplicationSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
+    interview_count = serializers.SerializerMethodField()
+    next_interview_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -19,7 +23,20 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'id', 'company', 'company_name', 'position', 'status', 'employment_type',
             'work_mode', 'date_applied', 'deadline', 'follow_up_date', 'job_url',
             'job_description', 'salary', 'notes', 'created_at', 'updated_at',
+            'interview_count', 'next_interview_date',
         ]
+
+    def get_interview_count(self, obj):
+        return obj.interviews.count()
+
+    def get_next_interview_date(self, obj):
+        upcoming = obj.interviews.filter(
+            interview_date__gte=timezone.now().date()
+        ).order_by('interview_date', 'interview_time').first()
+        return {
+        'date': upcoming.interview_date,
+        'time': upcoming.interview_time,
+    }
         # 'user' left out for the same reason — set automatically, never trusted from the request
 
 class DocumentSerializer(serializers.ModelSerializer):
@@ -59,4 +76,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+
+class ProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'location', 'bio', 'created_at', 'updated_at']
 

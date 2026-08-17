@@ -1,6 +1,7 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { ReactNode } from 'react';
+
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -74,13 +75,13 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-info">
+          <Link to="/profile" className="user-info" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="user-avatar">{user?.email?.[0]?.toUpperCase() ?? 'U'}</div>
             <div className="user-details">
               <p className="user-name">{user?.email}</p>
               <p className="user-email">Job Seeker</p>
             </div>
-          </div>
+          </Link>
           <button className="logout-btn" onClick={handleLogout}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9 10l3-3-3-3M12 7H5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
