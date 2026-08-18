@@ -12,10 +12,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
-
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -54,8 +56,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
-
 ]
 
 REST_FRAMEWORK = {
@@ -150,3 +150,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# AI layer — NVIDIA NIM API
+NVIDIA_API_KEY = os.environ.get('NVIDIA_API_KEY')
+NVIDIA_API_BASE_URL = 'https://integrate.api.nvidia.com/v1'
+NVIDIA_MODEL = 'meta/llama-3.1-70b-instruct'

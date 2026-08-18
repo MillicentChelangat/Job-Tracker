@@ -1,8 +1,7 @@
 from rest_framework import serializers
-from .models import Company, Application, Document, Interview, Profile
+from .models import Company, Application, Document, Interview, Profile, CandidateProfile
 from django.contrib.auth.models import User
 from django.utils import timezone
-
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -33,21 +32,34 @@ class ApplicationSerializer(serializers.ModelSerializer):
         upcoming = obj.interviews.filter(
             interview_date__gte=timezone.now().date()
         ).order_by('interview_date', 'interview_time').first()
+        if not upcoming:
+            return None
         return {
-        'date': upcoming.interview_date,
-        'time': upcoming.interview_time,
-    }
-        # 'user' left out for the same reason — set automatically, never trusted from the request
+            'date': upcoming.interview_date,
+            'time': upcoming.interview_time,
+        }
+
+
+class CandidateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CandidateProfile
+        fields = ['id', 'document', 'skills', 'education', 'experience', 'created_at']
+        # 'user' and 'raw_extracted_text' left out — ownership is automatic,
+        # and the raw text is only needed internally, not by the frontend
+
 
 class DocumentSerializer(serializers.ModelSerializer):
+    candidate_profile = CandidateProfileSerializer(read_only=True)
+
     class Meta:
         model = Document
         fields = [
             'id', 'application', 'document_type', 'file', 'file_name',
-            'parse_status', 'parsed_at', 'uploaded_at',
+            'parse_status', 'parsed_at', 'uploaded_at', 'candidate_profile',
         ]
         read_only_fields = ['file_name', 'parse_status', 'parsed_at', 'uploaded_at']
         # 'user' is left out — set automatically from the logged-in user, same pattern as Company/Application
+
 
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:
@@ -56,6 +68,7 @@ class InterviewSerializer(serializers.ModelSerializer):
             'id', 'application', 'interview_date', 'interview_time', 'interview_type',
             'location', 'interviewer', 'notes', 'result', 'created_at',
         ]
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -77,10 +90,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
 
     class Meta:
         model = Profile
         fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'location', 'bio', 'created_at', 'updated_at']
-

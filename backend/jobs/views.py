@@ -4,8 +4,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.db.models import Count
-from .models import Company, Application, Document, Interview, Profile
-from .serializers import CompanySerializer, ApplicationSerializer, DocumentSerializer, InterviewSerializer, RegisterSerializer, ProfileSerializer
+from django.utils import timezone
+from .models import Company, Application, Document, Interview, Profile, CandidateProfile
+from .serializers import CompanySerializer, ApplicationSerializer, DocumentSerializer, InterviewSerializer, RegisterSerializer, ProfileSerializer, CandidateProfileSerializer
+from .ai_service import extract_text_from_file, parse_resume_text, ResumeParseError
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.generics import RetrieveUpdateAPIView
 
@@ -17,11 +19,9 @@ class CompanyViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'industry', 'location']
 
     def get_queryset(self):
-        # Only ever return companies belonging to the logged-in user
         return Company.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        # Force the company to be owned by whoever is logged in — never trust a user field from the request
         serializer.save(user=self.request.user)
 
 
@@ -54,12 +54,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         })
 
 
-
-
 class DocumentViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentSerializer
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]  # required to accept actual file uploads, not just JSON
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         qs = Document.objects.filter(user=self.request.user)
@@ -75,13 +73,44 @@ class DocumentViewSet(viewsets.ModelViewSet):
             file_name=uploaded_file.name if uploaded_file else '',
         )
 
+    @action(detail=True, methods=['post'])
+    def parse(self, request, pk=None):
+        document = self.get_object()
+        force = request.query_params.get('force') == 'true'
+
+        if document.parse_status == 'parsed' and not force:
+            return Response(DocumentSerializer(document).data, status=200)
+
+        try:
+            text = extract_text_from_file(document)
+            result = parse_resume_text(text)
+        except ResumeParseError as e:
+            document.parse_status = 'failed'
+            document.save(update_fields=['parse_status'])
+            return Response({'error': str(e)}, status=400)
+
+        CandidateProfile.objects.update_or_create(
+            document=document,
+            defaults={
+                'user': request.user,
+                'skills': result['skills'],
+                'education': result['education'],
+                'experience': result['experience'],
+                'raw_extracted_text': text,
+            },
+        )
+        document.parse_status = 'parsed'
+        document.parsed_at = timezone.now()
+        document.save(update_fields=['parse_status', 'parsed_at'])
+
+        return Response(DocumentSerializer(document).data, status=200)
+
 
 class InterviewViewSet(viewsets.ModelViewSet):
     serializer_class = InterviewSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Ownership flows through application.user, since Interview has no direct user field
         qs = Interview.objects.filter(application__user=self.request.user)
         application_id = self.request.query_params.get('application')
         if application_id:
@@ -94,6 +123,7 @@ class InterviewViewSet(viewsets.ModelViewSet):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("You don't own this application.")
         serializer.save()
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -113,6 +143,7 @@ def register(request):
         password=password
     )
     return Response({'email': user.email}, status=201)
+
 
 class ProfileView(RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer

@@ -67,6 +67,7 @@ class Application(models.Model):
     def __str__(self):
         return f"{self.position} @ {self.company.name}"
 
+
 class Document(models.Model):
     DOCUMENT_TYPE_CHOICES = [
         ('resume', 'Resume'),
@@ -95,6 +96,7 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.file_name} ({self.get_document_type_display()})"
+
 
 class Interview(models.Model):
     INTERVIEW_TYPE_CHOICES = [
@@ -126,7 +128,8 @@ class Interview(models.Model):
         ordering = ['interview_date', 'interview_time']
 
     def __str__(self):
-        return f"{self.get_interview_type_display()} — {self.application}"      
+        return f"{self.get_interview_type_display()} — {self.application}"
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -145,4 +148,23 @@ class Profile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)    
+        Profile.objects.create(user=instance)
+
+
+class CandidateProfile(models.Model):
+    """
+    Structured data extracted from ONE specific resume upload.
+    Not one-per-user — one per Document, since Millie tailors her CV
+    per application. MatchResult (future) will reference the specific
+    version used for a given application, not just "the latest one".
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='candidate_profiles')
+    document = models.OneToOneField(Document, on_delete=models.CASCADE, related_name='candidate_profile')
+    skills = models.JSONField(default=list, blank=True)
+    education = models.JSONField(default=list, blank=True)
+    experience = models.JSONField(default=list, blank=True)
+    raw_extracted_text = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"CandidateProfile from {self.document.file_name}"
