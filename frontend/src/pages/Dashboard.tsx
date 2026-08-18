@@ -78,8 +78,8 @@ export default function Dashboard() {
   return (
     <div className="dash">
       <div className="dash-stats">
-        {statCards.map(({ label, value, delta, positive, accent }) => (
-          <div key={label} className="dcard stat-card-new">
+            {statCards.map(({ label, value, delta, positive, accent }) => (
+              <div key={label} className="dcard stat-card-new">
             <p className="sn-label">{label}</p>
             <p className="sn-value" style={{ color: accent }}>{value}</p>
             <p className={`sn-delta ${positive ? 'pos' : 'neg'}`}>{delta}</p>

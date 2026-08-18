@@ -17,4 +17,6 @@ export const documentsApi = {
   },
 
   delete: (id: number) => api.delete(`/documents/${id}/`),
+    parse: (id: number, force = false) =>
+    api.post<Document>(`/documents/${id}/parse/`, {}, { params: force ? { force: 'true' } : {} }),
 };

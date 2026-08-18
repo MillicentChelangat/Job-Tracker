@@ -55,6 +55,15 @@ export interface PaginatedResponse<T> {
 export type DocumentType = 'resume' | 'cover_letter';
 export type ParseStatus = 'pending' | 'parsed' | 'failed';
 
+export interface CandidateProfile {
+  id: number;
+  document: number;
+  skills: string[];
+  education: { degree: string; institution: string; years: string }[];
+  experience: { title: string; company: string; duration: string; summary: string }[];
+  created_at: string;
+}
+
 export interface Document {
   id: number;
   application: number | null;
@@ -64,6 +73,7 @@ export interface Document {
   parse_status: ParseStatus;
   parsed_at: string | null;
   uploaded_at: string;
+  candidate_profile: CandidateProfile | null;
 }
 
 export type InterviewType = 'phone' | 'technical' | 'behavioral' | 'panel' | 'final' | 'other';
