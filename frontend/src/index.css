@@ -353,8 +353,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  height: 100%;
-  overflow: hidden;
+
 }
 
 /* Row 1 — 3 stat cards */
@@ -366,22 +365,12 @@ body {
 }
 
 /* Row 2 — 3-column main grid */
-.dash-main {
+.dash-row-2col {
   display: grid;
-  grid-template-columns: 1.1fr 1.3fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 0.75rem;
-  flex: 1;
-  min-height: 0;
 }
-
-.dash-left,
-.dash-center,
-.dash-right {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 0;
-}
+.dash-row-full { display: flex; flex-direction: column; }
 
 /* ─────────────────────────────────────────
    FLOATING CARDS  (.dcard)
@@ -394,6 +383,18 @@ body {
   overflow: hidden;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+
+.ai-insights-prompt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--purple-pale);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+}
+.ai-insights-prompt strong { display: block; font-size: 13px; margin-bottom: 2px; }
+.ai-insights-prompt p { font-size: 12.5px; color: var(--muted); margin: 0; }
+
 
 .dcard:hover {
   transform: translateY(-3px);
@@ -999,10 +1000,12 @@ body {
   font-weight: 600;
   letter-spacing: 0.02em;
 }
+.badge-wishlist  { background: #f3e8ff; color: var(--purple); }
 .badge-applied   { background: #ede9fe; color: var(--purple); }
 .badge-interview { background: #fef3c7; color: #92400e; }
 .badge-offer     { background: #dcfce7; color: #166534; }
 .badge-rejected  { background: #fee2e2; color: #991b1b; }
+
 
 /* ─── Filters Bar ─── */
 .filters-bar {
@@ -1040,6 +1043,25 @@ body {
   transition: border-color 0.15s;
 }
 .filter-select:focus { border-color: var(--purple); }
+.filter-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--dark);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.filter-pill:hover { background: var(--purple-pale); color: var(--purple); }
+.filter-pill-active {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
+}
 
 /* ─── Table ─── */
 .table-card { padding: 0; overflow: hidden; }
@@ -1145,6 +1167,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal {
@@ -1154,6 +1177,14 @@ body {
   width: 360px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.18);
 }
+
+  .modal-lg { 
+  max-width: 640px; 
+  width: 90%; 
+  max-height: 85vh; 
+  overflow-y: auto;
+ }
+
 
 .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 0.4rem; }
 .modal p { font-size: 13.5px; color: var(--muted); margin-bottom: 1.5rem; }
@@ -1285,3 +1316,26 @@ body {
   color: var(--muted);
   font-size: 13px;
 }
+
+.board-grid { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
+.board-column { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 260px; flex-shrink: 0; display: flex; flex-direction: column; max-height: calc(100vh - 220px); transition: background 0.15s; }
+.board-column-over { background: var(--purple-pale); }
+.board-column-header { display: flex; align-items: center; gap: 6px; padding: 0.85rem 1rem; font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); }
+.board-column-dot { width: 8px; height: 8px; border-radius: 50%; }
+.board-column-count { margin-left: auto; background: var(--surface-alt); border-radius: 10px; padding: 1px 8px; font-size: 11px; color: var(--muted); }
+.board-column-body { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; }
+.board-column-empty { text-align: center; color: var(--muted); font-size: 12px; padding: 1rem 0; }
+.board-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.8rem; cursor: grab; box-shadow: var(--shadow-card); }
+.board-card:active { cursor: grabbing; }
+.board-card-position { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.board-card-company { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.board-card-salary { font-size: 11.5px; color: var(--green); margin-bottom: 4px; }
+.board-card-link { font-size: 11.5px; color: var(--purple); text-decoration: none; font-weight: 600; }
+.board-card-overlay { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+
+.pipeline-bars { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.25rem 0; }
+.pipeline-row { display: flex; align-items: center; gap: 10px; }
+.pipeline-label { width: 70px; flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--dark); }
+.pipeline-track { flex: 1; height: 10px; background: var(--surface-alt); border-radius: 6px; overflow: hidden; }
+.pipeline-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+.pipeline-count { width: 20px; text-align: right; font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }

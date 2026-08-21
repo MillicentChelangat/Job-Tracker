@@ -15,6 +15,18 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+
+{
+  to: '/board', end: false, label: 'Board',
+  icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="1" width="4" height="14" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+      <rect x="6" y="1" width="4" height="9" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+      <rect x="11" y="1" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+    </svg>
+  ),
+},
+
   {
     to: '/jobs', end: false, label: 'Applications',
     icon: (
@@ -25,15 +37,7 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
-  {
-    to: '/jobs/new', end: false, label: 'Add Job',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M8 5v6M5 8h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
+  
   {
     to: '/documents', end: false, label: 'Documents',
     icon: (

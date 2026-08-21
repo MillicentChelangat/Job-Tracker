@@ -1,4 +1,4 @@
-export type ApplicationStatus = 'applied' | 'interview' | 'offer' | 'rejected';
+export type ApplicationStatus = 'wishlist' | 'applied' | 'interview' | 'offer' | 'rejected';
 export type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'internship' | '';
 export type WorkMode = 'remote' | 'onsite' | 'hybrid' | '';
 

@@ -129,20 +129,38 @@ export default function Dashboard() {
           </div>
 
           <div className="dcard barchart-card">
-            <h3 className="dcard-title">Applications by Status</h3>
-            <ResponsiveContainer width="100%" height={130}>
-              <BarChart data={barData} barSize={26} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
-                <XAxis dataKey="status" tick={{ fontSize: 11, fill: '#6b6a66' }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6b6a66' }} axisLine={false} tickLine={false} />
-                <Tooltip cursor={{ fill: 'rgba(124,58,237,0.06)' }} contentStyle={{ borderRadius: 8, border: '1px solid #e5e3dd', fontSize: 12 }} />
-                <Bar dataKey="count" radius={[5, 5, 0, 0]}>
-                  {barData.map((entry) => (
-                    <Cell key={entry.status} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <h3 className="dcard-title">Application Pipeline</h3>
+            {total === 0 ? (
+              <div className="chart-empty-state">
+                <p>No applications yet — this fills in once you add your first one.</p>
+                <Link to="/jobs/new" className="btn btn-primary btn-sm">+ Add Application</Link>
+              </div>
+            ) : (
+              <div className="pipeline-bars">
+                {[
+                  { status: 'wishlist', label: 'Wishlist', color: '#9CA3AF' },
+                  { status: 'applied', label: 'Applied', color: '#7C3AED' },
+                  { status: 'interview', label: 'Interview', color: '#EF9F27' },
+                  { status: 'offer', label: 'Offer', color: '#639922' },
+                  { status: 'rejected', label: 'Rejected', color: '#E24B4A' },
+                ].map(({ status, label, color }) => {
+                  const count = stats?.by_status?.[status as ApplicationStatus] ?? 0;
+                  const pct = total ? Math.round((count / total) * 100) : 0;
+                  return (
+                    <div key={status} className="pipeline-row">
+                      <span className="pipeline-label">{label}</span>
+                      <div className="pipeline-track">
+                        <div
+                          className="pipeline-fill"
+                          style={{ width: `${pct}%`, background: color }}
+                        />
+                      </div>
+                      <span className="pipeline-count">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

@@ -4,13 +4,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationsApi } from '../api/applications';
 import StatusBadge from '../components/StatusBadge';
 import type { ApplicationStatus } from '../types/job';
+import ApplicationModal from '../components/ApplicationModal';
 
-const STATUSES: { value: string; label: string }[] = [
-  { value: '', label: 'All Statuses' },
-  { value: 'applied', label: 'Applied' },
-  { value: 'interview', label: 'Interview' },
-  { value: 'offer', label: 'Offer' },
-  { value: 'rejected', label: 'Rejected' },
+
+const STATUSES: { value: string; label: string; color?: string }[] = [
+  { value: '', label: 'All' },
+  { value: 'wishlist', label: 'Wishlist', color: '#9CA3AF' },
+  { value: 'applied', label: 'Applied', color: '#7C3AED' },
+  { value: 'interview', label: 'Interview', color: '#EF9F27' },
+  { value: 'offer', label: 'Offer', color: '#639922' },
+  { value: 'rejected', label: 'Rejected', color: '#E24B4A' },
 ];
 
 export default function JobList() {
@@ -20,6 +23,7 @@ export default function JobList() {
   const [page, setPage] = useState(1);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const qc = useQueryClient();
+  const [showModal, setShowModal] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['applications', { search, status, ordering, page }],
@@ -52,8 +56,8 @@ export default function JobList() {
           <h1 className="page-title">Applications</h1>
           <p className="page-subtitle">{data?.count ?? 0} total applications</p>
         </div>
-        <Link to="/jobs/new" className="btn btn-primary">+ Add Application</Link>
-      </header>
+        {showModal && <ApplicationModal onClose={() => setShowModal(false)} />}
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Add Application</button>      </header>
 
       {/* Filters */}
       <div className="filters-bar">
@@ -64,11 +68,18 @@ export default function JobList() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
         />
-        <select className="filter-select" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
-          {STATUSES.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
+        <div className="filter-pills">
+          {STATUSES.map(({ value, label, color }) => (
+            <button
+              key={value}
+              className={`filter-pill ${status === value ? 'filter-pill-active' : ''}`}
+              style={status === value && color ? { background: color, borderColor: color } : undefined}
+              onClick={() => { setStatus(value); setPage(1); }}
+            >
+              {label}
+            </button>
           ))}
-        </select>
+        </div>
         <select className="filter-select" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
           <option value="-created_at">Newest first</option>
           <option value="created_at">Oldest first</option>

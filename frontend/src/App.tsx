@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ApplicationDetail from './pages/ApplicationDetail';
 import Profile from './pages/Profile';
+import Board from './pages/Board';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 30 } },
@@ -24,6 +25,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
             <Route
               path="/*"
               element={
@@ -34,6 +36,7 @@ export default function App() {
                       <Route path="/jobs" element={<JobList />} />
                       <Route path="/jobs/new" element={<JobForm />} />
                       <Route path="/jobs/:id/edit" element={<JobForm />} />
+                      <Route path="/board" element={<Board />} />
                       <Route path="/documents" element={<Documents />} />
                       <Route path="/jobs/:id" element={<ApplicationDetail />} />
                       <Route path="/profile" element={<Profile />} />

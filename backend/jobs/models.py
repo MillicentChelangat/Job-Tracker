@@ -26,6 +26,7 @@ class Company(models.Model):
 
 class Application(models.Model):
     STATUS_CHOICES = [
+        ('wishlist', 'Wishlist'),
         ('applied', 'Applied'),
         ('interview', 'Interview'),
         ('offer', 'Offer'),
